@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"math"
 	"sort"
 	"strconv"
 	"strings"
@@ -77,15 +76,12 @@ func appendVAsset(asset string, b *bytes.Buffer) error {
 	}
 
 	amountStr, symbol := parts[0], parts[1]
-
-	// all tokens have precision 3 except for VESTS
 	precision := 3
-
 	if symbol == "VESTS" {
 		precision = 6
 	}
 
-	// convert to their old names for compatibility
+	// Convert to legacy symbol names for compatibility
 	switch symbol {
 	case "HIVE":
 		symbol = "STEEM"
@@ -93,18 +89,32 @@ func appendVAsset(asset string, b *bytes.Buffer) error {
 		symbol = "SBD"
 	}
 
-	// convert to float and multiply by 10^precision
-	amount, err := strconv.ParseFloat(amountStr, 64)
+	// Handle decimal parsing without floating points
+	parts = strings.Split(amountStr, ".")
+	if len(parts) > 2 {
+		return errors.New("invalid amount format: " + amountStr)
+	}
 
+	// Pad or truncate decimal part to required precision
+	decimalPart := ""
+	if len(parts) > 1 {
+		decimalPart = parts[1]
+	}
+	if len(decimalPart) > precision {
+		decimalPart = decimalPart[:precision]
+	} else {
+		decimalPart += strings.Repeat("0", precision-len(decimalPart))
+	}
+
+	// Combine whole and decimal parts
+	fullNumber := parts[0] + decimalPart
+	amount, err := strconv.ParseInt(fullNumber, 10, 64)
 	if err != nil {
 		return err
 	}
 
-	amount = amount * math.Pow10(precision)
-
-	// write the amount as int64
-	err = binary.Write(b, binary.LittleEndian, int64(amount))
-
+	// Write the amount as int64
+	err = binary.Write(b, binary.LittleEndian, amount)
 	if err != nil {
 		return err
 	}
