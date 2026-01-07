@@ -2,6 +2,7 @@ package hivego
 
 import (
 	"errors"
+	"log"
 	"sync"
 
 	"github.com/cfoxon/jsonrpc2client"
@@ -14,13 +15,13 @@ type NodeStats struct {
 }
 
 type HiveRpcNode struct {
-	addresses      []string
-	currentIndex   int
-	nodeStats      []NodeStats
-	mutex          sync.RWMutex
-	MaxConn        int
-	MaxBatch       int
-	NoBroadcast    bool
+	addresses    []string
+	currentIndex int
+	nodeStats    []NodeStats
+	mutex        sync.RWMutex
+	MaxConn      int
+	MaxBatch     int
+	NoBroadcast  bool
 }
 
 type globalProps struct {
@@ -71,12 +72,14 @@ func (h *HiveRpcNode) rpcExec(query hrpcQuery) ([]byte, error) {
 		jr2query := &jsonrpc2client.RpcRequest{Method: query.method, JsonRpc: "2.0", Id: 1, Params: query.params}
 		resp, err := rpcClient.CallRaw(jr2query)
 		if err != nil {
+			log.Printf("DEBUG: rpcExec failed for endpoint %s (index %d), method %s: %v", endpoint, index, query.method, err)
 			h.nodeStats[index].failureCount++
 			h.updateRollingAvg(index)
 			continue
 		}
 
 		if resp.Error != nil {
+			log.Printf("DEBUG: rpcExec received error response from endpoint %s (index %d), method %s: %v", endpoint, index, query.method, resp.Error)
 			h.nodeStats[index].failureCount++
 			h.updateRollingAvg(index)
 			continue
@@ -84,6 +87,7 @@ func (h *HiveRpcNode) rpcExec(query hrpcQuery) ([]byte, error) {
 
 		// Check for bad data: if result is empty, consider it bad
 		if len(resp.Result) == 0 {
+			log.Printf("DEBUG: rpcExec received empty result from endpoint %s (index %d), method %s", endpoint, index, query.method)
 			h.nodeStats[index].failureCount++
 			h.updateRollingAvg(index)
 			continue
@@ -125,6 +129,7 @@ func (h *HiveRpcNode) rpcExecBatchFast(queries []hrpcQuery) ([][]byte, error) {
 
 		resps, err := rpcClient.CallBatchFast(jr2queries)
 		if err != nil {
+			log.Printf("DEBUG: rpcExecBatchFast failed for endpoint %s (index %d): %v", endpoint, index, err)
 			h.nodeStats[index].failureCount++
 			h.updateRollingAvg(index)
 			continue
@@ -139,6 +144,7 @@ func (h *HiveRpcNode) rpcExecBatchFast(queries []hrpcQuery) ([][]byte, error) {
 			}
 		}
 		if hasError {
+			log.Printf("DEBUG: rpcExecBatchFast received empty response(s) from endpoint %s (index %d)", endpoint, index)
 			h.nodeStats[index].failureCount++
 			h.updateRollingAvg(index)
 			continue
