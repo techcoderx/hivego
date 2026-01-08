@@ -6,7 +6,7 @@ import (
 )
 
 func TestVirtualOps(t *testing.T) {
-	rpc := NewHiveRpc([]string{"https://invalid.com","https://api.hive.blog"})
+	rpc := NewHiveRpc([]string{"https://invalid.com", "https://api.hive.blog"}, true)
 	virtualOps, err := rpc.FetchVirtualOps(88386873, true, false)
 
 	if err != nil {

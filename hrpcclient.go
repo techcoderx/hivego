@@ -15,13 +15,14 @@ type NodeStats struct {
 }
 
 type HiveRpcNode struct {
-	addresses    []string
-	currentIndex int
-	nodeStats    []NodeStats
-	mutex        sync.RWMutex
-	MaxConn      int
-	MaxBatch     int
-	NoBroadcast  bool
+	addresses     []string
+	currentIndex  int
+	nodeStats     []NodeStats
+	mutex         sync.RWMutex
+	MaxConn       int
+	MaxBatch      int
+	NoBroadcast   bool
+	enableLogging bool
 }
 
 type globalProps struct {
@@ -35,18 +36,19 @@ type hrpcQuery struct {
 	params interface{}
 }
 
-func NewHiveRpc(addrs []string) *HiveRpcNode {
-	return NewHiveRpcWithOpts(addrs, 1, 1)
+func NewHiveRpc(addrs []string, enableLogging bool) *HiveRpcNode {
+	return NewHiveRpcWithOpts(addrs, 1, 1, enableLogging)
 }
 
-func NewHiveRpcWithOpts(addrs []string, maxConn int, maxBatch int) *HiveRpcNode {
+func NewHiveRpcWithOpts(addrs []string, maxConn int, maxBatch int, enableLogging bool) *HiveRpcNode {
 	nodeStats := make([]NodeStats, len(addrs))
 	return &HiveRpcNode{
-		addresses:    addrs,
-		currentIndex: 0,
-		nodeStats:    nodeStats,
-		MaxConn:      maxConn,
-		MaxBatch:     maxBatch,
+		addresses:     addrs,
+		currentIndex:  0,
+		nodeStats:     nodeStats,
+		MaxConn:       maxConn,
+		MaxBatch:      maxBatch,
+		enableLogging: enableLogging,
 	}
 }
 
@@ -72,33 +74,45 @@ func (h *HiveRpcNode) rpcExec(query hrpcQuery) ([]byte, error) {
 		jr2query := &jsonrpc2client.RpcRequest{Method: query.method, JsonRpc: "2.0", Id: 1, Params: query.params}
 		resp, err := rpcClient.CallRaw(jr2query)
 		if err != nil {
-			log.Printf("DEBUG: rpcExec failed for endpoint %s (index %d), method %s: %v", endpoint, index, query.method, err)
+			if h.enableLogging {
+				log.Printf("rpcExec failed for endpoint %s (index %d), method %s: %v", endpoint, index, query.method, err)
+			}
 			h.nodeStats[index].failureCount++
 			h.updateRollingAvg(index)
-			h.logFailureCounts()
-			nextIndex := (h.currentIndex + i + 1) % numNodes
-			h.logSwitchingNode(index, nextIndex, numNodes)
+			if h.enableLogging {
+				h.logFailureCounts()
+				nextIndex := (h.currentIndex + i + 1) % numNodes
+				h.logSwitchingNode(index, nextIndex, numNodes)
+			}
 			continue
 		}
 
 		if resp.Error != nil {
-			log.Printf("DEBUG: rpcExec received error response from endpoint %s (index %d), method %s: %v", endpoint, index, query.method, resp.Error)
+			if h.enableLogging {
+				log.Printf("rpcExec received error response from endpoint %s (index %d), method %s: %v", endpoint, index, query.method, resp.Error)
+			}
 			h.nodeStats[index].failureCount++
 			h.updateRollingAvg(index)
-			h.logFailureCounts()
-			nextIndex := (h.currentIndex + i + 1) % numNodes
-			h.logSwitchingNode(index, nextIndex, numNodes)
+			if h.enableLogging {
+				h.logFailureCounts()
+				nextIndex := (h.currentIndex + i + 1) % numNodes
+				h.logSwitchingNode(index, nextIndex, numNodes)
+			}
 			continue
 		}
 
 		// Check for bad data: if result is empty, consider it bad
 		if len(resp.Result) == 0 {
-			log.Printf("DEBUG: rpcExec received empty result from endpoint %s (index %d), method %s", endpoint, index, query.method)
+			if h.enableLogging {
+				log.Printf("rpcExec received empty result from endpoint %s (index %d), method %s", endpoint, index, query.method)
+			}
 			h.nodeStats[index].failureCount++
 			h.updateRollingAvg(index)
-			h.logFailureCounts()
-			nextIndex := (h.currentIndex + i + 1) % numNodes
-			h.logSwitchingNode(index, nextIndex, numNodes)
+			if h.enableLogging {
+				h.logFailureCounts()
+				nextIndex := (h.currentIndex + i + 1) % numNodes
+				h.logSwitchingNode(index, nextIndex, numNodes)
+			}
 			continue
 		}
 
@@ -151,12 +165,16 @@ func (h *HiveRpcNode) rpcExecBatchFast(queries []hrpcQuery) ([][]byte, error) {
 
 		resps, err := rpcClient.CallBatchFast(jr2queries)
 		if err != nil {
-			log.Printf("DEBUG: rpcExecBatchFast failed for endpoint %s (index %d): %v", endpoint, index, err)
+			if h.enableLogging {
+				log.Printf("rpcExecBatchFast failed for endpoint %s (index %d): %v", endpoint, index, err)
+			}
 			h.nodeStats[index].failureCount++
 			h.updateRollingAvg(index)
-			h.logFailureCounts()
-			nextIndex := (h.currentIndex + i + 1) % numNodes
-			h.logSwitchingNode(index, nextIndex, numNodes)
+			if h.enableLogging {
+				h.logFailureCounts()
+				nextIndex := (h.currentIndex + i + 1) % numNodes
+				h.logSwitchingNode(index, nextIndex, numNodes)
+			}
 			continue
 		}
 
@@ -169,12 +187,16 @@ func (h *HiveRpcNode) rpcExecBatchFast(queries []hrpcQuery) ([][]byte, error) {
 			}
 		}
 		if hasError {
-			log.Printf("DEBUG: rpcExecBatchFast received empty response(s) from endpoint %s (index %d)", endpoint, index)
+			if h.enableLogging {
+				log.Printf("rpcExecBatchFast received empty response(s) from endpoint %s (index %d)", endpoint, index)
+			}
 			h.nodeStats[index].failureCount++
 			h.updateRollingAvg(index)
-			h.logFailureCounts()
-			nextIndex := (h.currentIndex + i + 1) % numNodes
-			h.logSwitchingNode(index, nextIndex, numNodes)
+			if h.enableLogging {
+				h.logFailureCounts()
+				nextIndex := (h.currentIndex + i + 1) % numNodes
+				h.logSwitchingNode(index, nextIndex, numNodes)
+			}
 			continue
 		}
 
