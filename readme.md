@@ -5,7 +5,12 @@ At this time, there are only a few functions from the client. More will be added
 ### Example usage:
 create a client:
 ```
-hrpc := hivego.NewHiveRpc("https://api.myHiveBlockchainNode.com")
+addrs := []string{"https://api.hive.blog", "https://api.myHiveBlockchainNode.com"}
+hrpc := hivego.NewHiveRpc(addrs)
+
+// Note: Logging is controlled by build tags:
+//   - Development: go build -tags debug
+//   - Production: go build (default, no logging)
 ```
 
 submit a custom json tx:

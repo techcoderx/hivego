@@ -100,7 +100,7 @@ func (h *HiveRpcNode) Broadcast(ops []HiveOperation, wif *string) (string, error
 	params = append(params, tx)
 	if !h.NoBroadcast {
 		q := hrpcQuery{"condenser_api.broadcast_transaction", params}
-		res, err := h.rpcExec(h.address, q)
+		res, err := h.rpcExec(q)
 		if err != nil {
 			return string(res), err
 		}
@@ -119,7 +119,7 @@ func (h *HiveRpcNode) BroadcastRaw(tx HiveTransaction) (string, error) {
 	params = append(params, tx)
 	if !h.NoBroadcast {
 		q := hrpcQuery{"condenser_api.broadcast_transaction", params}
-		res, err := h.rpcExec(h.address, q)
+		res, err := h.rpcExec(q)
 		if err != nil {
 			return string(res), err
 		}

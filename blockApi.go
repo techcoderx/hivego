@@ -195,7 +195,7 @@ func (h *HiveRpcNode) StreamBlocks() (<-chan Block, error) {
 
 	go func() {
 		dynProps := hrpcQuery{method: "condenser_api.get_dynamic_global_properties", params: []string{}}
-		res, err := h.rpcExec(h.address, dynProps)
+		res, err := h.rpcExec(dynProps)
 		if err != nil {
 			log.Fatalf("Failed to fetch dynamic global properties: %v", err)
 			close(blockChan)
@@ -234,8 +234,7 @@ func (h *HiveRpcNode) FetchVirtualOps(blockHeight int, onlyVirtual bool, Include
 	query := hrpcQuery{method: "account_history_api.get_ops_in_block", params: params}
 	queries := []hrpcQuery{query}
 
-	endpoint := h.address
-	res, err := h.rpcExecBatchFast(endpoint, queries)
+	res, err := h.rpcExecBatchFast(queries)
 
 	if err != nil {
 		return nil, err
@@ -297,8 +296,7 @@ func (h *HiveRpcNode) fetchBlockInRange(startBlock, count int) ([]Block, error) 
 	query := hrpcQuery{method: "block_api.get_block_range", params: params}
 	queries := []hrpcQuery{query}
 
-	endpoint := h.address
-	res, err := h.rpcExecBatchFast(endpoint, queries)
+	res, err := h.rpcExecBatchFast(queries)
 	if err != nil {
 		return nil, err
 	}
@@ -337,8 +335,7 @@ func (h *HiveRpcNode) fetchBlock(params []getBlockQueryParams) ([]Block, error) 
 		queries = append(queries, query)
 	}
 
-	endpoint := h.address
-	res, err := h.rpcExecBatchFast(endpoint, queries)
+	res, err := h.rpcExecBatchFast(queries)
 	if err != nil {
 		return nil, err
 	}

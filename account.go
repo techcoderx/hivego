@@ -115,8 +115,7 @@ func (h *HiveRpcNode) GetAccount(accountNames []string) ([]AccountData, error) {
 		method: "condenser_api.get_accounts",
 		params: params,
 	}
-	endpoint := h.address
-	res, err := h.rpcExec(endpoint, query)
+	res, err := h.rpcExec(query)
 	if err != nil {
 		return nil, err
 	}
