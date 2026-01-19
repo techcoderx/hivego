@@ -15,6 +15,7 @@ type HiveTransaction struct {
 	OperationsJs   [][2]interface{} `json:"operations"`
 	Extensions     []string         `json:"extensions"`
 	Signatures     []string         `json:"signatures"`
+	ChainID        string           `json:"-"`
 }
 
 func (t *HiveTransaction) GenerateTrxId() (string, error) {
@@ -34,15 +35,22 @@ func (t *HiveTransaction) Sign(keyPair KeyPair) (string, error) {
 		return "", err
 	}
 
-	digest := HashTxForSig(message)
-
-	sig, err := secp256k1.SignCompact(keyPair.PrivateKey, digest, true)
-
-	if err != nil {
-		return "", err
+	// Use custom chain ID if provided, otherwise use default
+	if t.ChainID != "" {
+		digest := HashTxForSig(message, t.ChainID)
+		sig, err := secp256k1.SignCompact(keyPair.PrivateKey, digest, true)
+		if err != nil {
+			return "", err
+		}
+		return hex.EncodeToString(sig), nil
+	} else {
+		digest := HashTxForSig(message)
+		sig, err := secp256k1.SignCompact(keyPair.PrivateKey, digest, true)
+		if err != nil {
+			return "", err
+		}
+		return hex.EncodeToString(sig), nil
 	}
-
-	return hex.EncodeToString(sig), nil
 }
 
 func (t *HiveTransaction) AddSig(sig string) {
@@ -75,13 +83,24 @@ func (h *HiveRpcNode) Broadcast(ops []HiveOperation, wif *string) (string, error
 		Operations:     ops,
 	}
 
+	// Set chain ID from HiveRpcNode if available
+	if h.ChainID != "" {
+		tx.ChainID = h.ChainID
+	}
+
 	message, err := SerializeTx(tx)
 
 	if err != nil {
 		return "", err
 	}
 
-	digest := HashTxForSig(message)
+	// Use custom chain ID for signing if provided
+	var digest []byte
+	if tx.ChainID != "" {
+		digest = HashTxForSig(message, tx.ChainID)
+	} else {
+		digest = HashTxForSig(message)
+	}
 
 	txId, err := tx.GenerateTrxId()
 	if err != nil {

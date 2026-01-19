@@ -22,6 +22,7 @@ type HiveRpcNode struct {
 	MaxConn      int
 	MaxBatch     int
 	NoBroadcast  bool
+	ChainID      string
 }
 
 type globalProps struct {
