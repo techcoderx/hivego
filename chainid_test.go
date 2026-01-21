@@ -8,10 +8,7 @@ import (
 func TestCustomChainID(t *testing.T) {
 	// Test that custom chain ID is used when provided
 	tx := getTestVoteTx()
-
-	// Set a custom chain ID
 	customChainID := "1234567800000000000000000000000000000000000000000000000000000000"
-	tx.ChainID = customChainID
 
 	// Test signing with custom chain ID
 	message, err := SerializeTx(tx)
@@ -27,7 +24,7 @@ func TestCustomChainID(t *testing.T) {
 	}
 
 	// Sign with custom chain ID
-	sig, err := tx.Sign(*keyPair)
+	sig, err := tx.Sign(*keyPair, customChainID)
 	if err != nil {
 		t.Fatal("Failed to sign transaction:", err)
 	}
@@ -38,8 +35,7 @@ func TestCustomChainID(t *testing.T) {
 	}
 
 	// Test that the signature is different from default chain ID signature
-	txDefault := getTestVoteTx() // No custom chain ID
-	sigDefault, err := txDefault.Sign(*keyPair)
+	sigDefault, err := tx.Sign(*keyPair)
 	if err != nil {
 		t.Fatal("Failed to sign transaction with default chain ID:", err)
 	}
