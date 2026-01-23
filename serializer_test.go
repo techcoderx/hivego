@@ -109,3 +109,15 @@ func TestSerializeOpAccountUpdateOperation(t *testing.T) {
 		t.Error("Expected", expected, "got", got)
 	}
 }
+
+func TestSerializeOpTransfer(t *testing.T) {
+	got, _ := getTestTransferOp().SerializeOp()
+	expected := []byte{2, 10, 116, 105, 98, 102, 111, 120, 46, 118,
+		115, 99, 11, 118, 115, 99, 46, 103, 97, 116,
+		101, 119, 97, 121, 232, 3, 0, 0, 0, 0,
+		0, 0, 35, 32, 188, 190, 9, 116, 111, 61,
+		116, 105, 98, 102, 111, 120}
+	if !bytes.Equal(got, expected) {
+		t.Error("Expected", expected, "got", got)
+	}
+}
