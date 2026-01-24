@@ -37,10 +37,10 @@ func TestFailoverAllNodesFail(t *testing.T) {
 		t.Errorf("Expected failure when all nodes fail, but got success")
 	}
 
-	// Check that error message indicates all failed
-	expectedMsg := "all API nodes failed"
-	if err.Error() != expectedMsg {
-		t.Errorf("Expected error message '%s', got '%s'", expectedMsg, err.Error())
+	// Check that an error occurred (the actual error message should now be specific)
+	// This verifies that the function returns the actual error instead of generic message
+	if err.Error() == "all API nodes failed" {
+		t.Errorf("Expected specific error message, but got generic 'all API nodes failed'")
 	}
 }
 

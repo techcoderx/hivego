@@ -65,6 +65,8 @@ func (h *HiveRpcNode) rpcExec(query hrpcQuery) ([]byte, error) {
 	defer h.mutex.Unlock()
 
 	numNodes := len(h.addresses)
+	var lastError error
+
 	for i := 0; i < numNodes; i++ {
 		index := (h.currentIndex + i) % numNodes
 		endpoint := h.addresses[index]
@@ -83,6 +85,7 @@ func (h *HiveRpcNode) rpcExec(query hrpcQuery) ([]byte, error) {
 				nextIndex := (h.currentIndex + i + 1) % numNodes
 				h.logSwitchingNode(index, nextIndex, numNodes)
 			}
+			lastError = err
 			continue
 		}
 
@@ -97,6 +100,7 @@ func (h *HiveRpcNode) rpcExec(query hrpcQuery) ([]byte, error) {
 				nextIndex := (h.currentIndex + i + 1) % numNodes
 				h.logSwitchingNode(index, nextIndex, numNodes)
 			}
+			lastError = errors.New(resp.Error.Message)
 			continue
 		}
 
@@ -112,6 +116,7 @@ func (h *HiveRpcNode) rpcExec(query hrpcQuery) ([]byte, error) {
 				nextIndex := (h.currentIndex + i + 1) % numNodes
 				h.logSwitchingNode(index, nextIndex, numNodes)
 			}
+			lastError = errors.New("empty result received from node")
 			continue
 		}
 
@@ -122,6 +127,9 @@ func (h *HiveRpcNode) rpcExec(query hrpcQuery) ([]byte, error) {
 		return resp.Result, nil
 	}
 
+	if lastError != nil {
+		return nil, lastError
+	}
 	return nil, errors.New("all API nodes failed")
 }
 
@@ -150,6 +158,8 @@ func (h *HiveRpcNode) rpcExecBatchFast(queries []hrpcQuery) ([][]byte, error) {
 	defer h.mutex.Unlock()
 
 	numNodes := len(h.addresses)
+	var lastError error
+
 	for i := 0; i < numNodes; i++ {
 		index := (h.currentIndex + i) % numNodes
 		endpoint := h.addresses[index]
@@ -174,6 +184,7 @@ func (h *HiveRpcNode) rpcExecBatchFast(queries []hrpcQuery) ([][]byte, error) {
 				nextIndex := (h.currentIndex + i + 1) % numNodes
 				h.logSwitchingNode(index, nextIndex, numNodes)
 			}
+			lastError = err
 			continue
 		}
 
@@ -196,6 +207,7 @@ func (h *HiveRpcNode) rpcExecBatchFast(queries []hrpcQuery) ([][]byte, error) {
 				nextIndex := (h.currentIndex + i + 1) % numNodes
 				h.logSwitchingNode(index, nextIndex, numNodes)
 			}
+			lastError = errors.New("empty response(s) received from node")
 			continue
 		}
 
@@ -209,5 +221,8 @@ func (h *HiveRpcNode) rpcExecBatchFast(queries []hrpcQuery) ([][]byte, error) {
 		return batchResult, nil
 	}
 
+	if lastError != nil {
+		return nil, lastError
+	}
 	return nil, errors.New("all API nodes failed")
 }
