@@ -50,9 +50,17 @@ func (h *HiveRpcNode) GetSigningData() (signingDataFromChain, error) {
 	return signingData, nil
 }
 
-func HashTxForSig(tx []byte) []byte {
+func HashTxForSig(tx []byte, chainID ...string) []byte {
 	var message bytes.Buffer
-	message.Write(getHiveChainId())
+
+	// Use custom chain ID if provided, otherwise use default
+	if len(chainID) > 0 && chainID[0] != "" {
+		cid, _ := hex.DecodeString(chainID[0])
+		message.Write(cid)
+	} else {
+		message.Write(getHiveChainId())
+	}
+
 	message.Write(tx)
 
 	digest := sha256.New()

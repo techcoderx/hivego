@@ -34,6 +34,17 @@ func getTestAccountUpdateOp() HiveOperation {
 	}
 }
 
+func getTestTransferOp() HiveOperation {
+	// legacy: 1d59a3a21cc704686a942c513658463fac61561a
+	// hf26: 2e40400aa62dc4b967e2c5b703a86f1e23ab4907
+	return TransferOperation{
+		To:     "vsc.gateway",
+		From:   "tibfox.vsc",
+		Memo:   "to=tibfox",
+		Amount: "1.000 HIVE",
+	}
+}
+
 func getTwoTestOps() []HiveOperation {
 	return []HiveOperation{getTestVoteOp(), getTestCustomJsonOp()}
 }

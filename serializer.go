@@ -81,12 +81,20 @@ func appendVAsset(asset string, b *bytes.Buffer) error {
 		precision = 6
 	}
 
-	// Convert to legacy symbol names for compatibility
+	var nai uint32
 	switch symbol {
 	case "HIVE":
-		symbol = "STEEM"
+		fallthrough
+	case "TESTS":
+		nai = ((99999999 + 2) << 5) | 3
 	case "HBD":
-		symbol = "SBD"
+		fallthrough
+	case "TBD":
+		nai = ((99999999 + 1) << 5) | 3
+	case "VESTS":
+		nai = ((99999999 + 3) << 5) | 6
+	default:
+		return errors.New("invalid asset symbol")
 	}
 
 	// Handle decimal parsing without floating points
@@ -119,17 +127,10 @@ func appendVAsset(asset string, b *bytes.Buffer) error {
 		return err
 	}
 
-	// write the precision
-	b.WriteByte(byte(precision))
-
-	// write the symbol NUL padded to 8 bits
-	for i := 0; i < 7; i++ {
-		if i < len(symbol) {
-			b.WriteByte(symbol[i])
-		} else {
-			b.WriteByte(byte(0))
-		}
-	}
+	// Write the nai
+	naiBytes := make([]byte, 4)
+	binary.LittleEndian.PutUint32(naiBytes, nai)
+	b.Write(naiBytes)
 
 	return nil
 }

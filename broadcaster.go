@@ -27,21 +27,18 @@ func (t *HiveTransaction) GenerateTrxId() (string, error) {
 	return hex.EncodeToString(digest)[0:40], nil
 }
 
-func (t *HiveTransaction) Sign(keyPair KeyPair) (string, error) {
+func (t *HiveTransaction) Sign(keyPair KeyPair, chainId ...string) (string, error) {
 	message, err := SerializeTx(*t)
 
 	if err != nil {
 		return "", err
 	}
 
-	digest := HashTxForSig(message)
-
+	digest := HashTxForSig(message, chainId...)
 	sig, err := secp256k1.SignCompact(keyPair.PrivateKey, digest, true)
-
 	if err != nil {
 		return "", err
 	}
-
 	return hex.EncodeToString(sig), nil
 }
 
@@ -81,7 +78,7 @@ func (h *HiveRpcNode) Broadcast(ops []HiveOperation, wif *string) (string, error
 		return "", err
 	}
 
-	digest := HashTxForSig(message)
+	digest := HashTxForSig(message, h.ChainID)
 
 	txId, err := tx.GenerateTrxId()
 	if err != nil {
