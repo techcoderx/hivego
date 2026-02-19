@@ -22,6 +22,28 @@ func getTestCustomJsonOp() HiveOperation {
 	}
 }
 
+func getTestAccCreateOp() HiveOperation {
+	return AccountCreateOperation{
+		Fee:            "0.000 HIVE",
+		Creator:        "milo-hpr",
+		NewAccountName: "sagar",
+		Owner: Auths{
+			WeightThreshold: 1,
+			KeyAuths:        [][2]interface{}{{"STM4y4wdy4eNBVBzXAXEp5SSrXEQMqBstDu6TvMGN1aUz19zAruow", 1}},
+		},
+		Active: Auths{
+			WeightThreshold: 1,
+			KeyAuths:        [][2]interface{}{{"STM6e1heeScT5oj8AsYKdRGfYcqiqbiZkpWY8qL3uuHZY4mLPjiYb", 1}},
+		},
+		Posting: Auths{
+			WeightThreshold: 1,
+			KeyAuths:        [][2]interface{}{{"STM8VPjfDcioxjkc5dRK8oi4jiyKagEZmvL9pCmmm4M9utkFh2SbK", 1}},
+		},
+		MemoKey:      "STM67xAW8SFTki89r2TfFBZcKPRyRjL2D9kWd5wf1FFKdQULeqiPu",
+		JsonMetadata: "",
+	}
+}
+
 func getTestAccountUpdateOp() HiveOperation {
 	return AccountUpdateOperation{
 		Account:      "sniperduel17",
@@ -63,4 +85,11 @@ func getTestTx(ops []HiveOperation) HiveTransaction {
 
 func getTestVoteTx() HiveTransaction {
 	return getTestTx([]HiveOperation{getTestVoteOp()})
+}
+
+func getTestClaimAcc() HiveOperation {
+	return ClaimAccountOperation{
+		Fee:     "0.000 HIVE",
+		Creator: "techcoderx",
+	}
 }
