@@ -66,6 +66,21 @@ type Auths struct {
 	KeyAuths        [][2]interface{} `json:"key_auths"`     // tuple (string, int)
 }
 
+type AccountCreateOperation struct {
+	Fee            string `json:"fee"`
+	Creator        string `json:"creator"`
+	NewAccountName string `json:"new_account_name"`
+	Owner          Auths  `json:"owner"`
+	Active         Auths  `json:"active"`
+	Posting        Auths  `json:"posting"`
+	MemoKey        string `json:"memo_key"`
+	JsonMetadata   string `json:"json_metadata"`
+}
+
+func (o AccountCreateOperation) OpName() string {
+	return "account_create"
+}
+
 // ref: https://developers.hive.io/apidefinitions/#broadcast_ops_account_update
 type AccountUpdateOperation struct {
 	Account string `json:"account"`
@@ -140,6 +155,15 @@ type ClaimRewardOperation struct {
 
 func (o ClaimRewardOperation) OpName() string {
 	return o.opText
+}
+
+type ClaimAccountOperation struct {
+	Fee     string `json:"fee"`
+	Creator string `json:"creator"`
+}
+
+func (o ClaimAccountOperation) OpName() string {
+	return "claim_account"
 }
 
 func (h *HiveRpcNode) ClaimRewards(Account string, wif *string) (string, error) {

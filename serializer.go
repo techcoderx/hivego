@@ -228,6 +228,31 @@ func (o TransferOperation) SerializeOp() ([]byte, error) {
 	return transferBuf.Bytes(), nil
 }
 
+func (a AccountCreateOperation) SerializeOp() ([]byte, error) {
+	var buf bytes.Buffer
+	buf.WriteByte(opIdB(a.OpName()))
+
+	// fee
+	err := appendVAsset(a.Fee, &buf)
+	if err != nil {
+		return nil, err
+	}
+
+	appendVString(a.Creator, &buf)
+	appendVString(a.NewAccountName, &buf)
+	serializeAuthority(a.Owner, &buf)
+	serializeAuthority(a.Active, &buf)
+	serializeAuthority(a.Posting, &buf)
+
+	err = writePublicKey(a.MemoKey, &buf)
+	if err != nil {
+		return nil, err
+	}
+	appendVString(a.JsonMetadata, &buf)
+
+	return buf.Bytes(), nil
+}
+
 func (a AccountUpdateOperation) SerializeOp() ([]byte, error) {
 	var buf bytes.Buffer
 
@@ -322,6 +347,20 @@ func (o CancelTransferFromSavings) SerializeOp() ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
+func (o ClaimAccountOperation) SerializeOp() ([]byte, error) {
+	var buf bytes.Buffer
+	buf.WriteByte(opIdB(o.OpName()))
+
+	appendVString(o.Creator, &buf)
+	err := appendVAsset(o.Fee, &buf)
+	if err != nil {
+		return nil, err
+	}
+	buf.Write([]byte{extensionsB()})
+
+	return buf.Bytes(), nil
+}
+
 // todo: UNTESTED
 func appendOptionalAuthority(auth *Auths, buf *bytes.Buffer) {
 	if auth != nil {
@@ -385,20 +424,22 @@ func serializeAuthority(auth Auths, buf *bytes.Buffer) {
 		return
 	}
 	for _, keyAuth := range sortKeyAuth(auth.KeyAuths) {
-		pk, err := DecodePublicKey(keyAuth[0].(string))
-
-		if err != nil {
-			log.Printf("error decoding public key: %v\n", err)
-			return
-		}
-
-		binary.Write(buf, binary.LittleEndian, pk.SerializeCompressed())
+		writePublicKey(keyAuth[0].(string), buf)
 		err = binary.Write(buf, binary.LittleEndian, uint16(keyAuth[1].(int)))
 		if err != nil {
 			log.Printf("error writing key_auth weight: %v\n", err)
 			return
 		}
 	}
+}
+
+func writePublicKey(pub string, buf *bytes.Buffer) error {
+	pk, err := DecodePublicKey(pub)
+	if err != nil {
+		return err
+	}
+	binary.Write(buf, binary.LittleEndian, pk.SerializeCompressed())
+	return nil
 }
 
 func sortKeyAuth(auths [][2]interface{}) [][2]interface{} {
