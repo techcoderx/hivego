@@ -60,6 +60,16 @@ func (o CancelTransferFromSavings) OpName() string {
 	return "cancel_transfer_from_savings"
 }
 
+type TransferToVesting struct {
+	From   string `json:"from"`
+	To     string `json:"to"`
+	Amount string `json:"amount"`
+}
+
+func (o TransferToVesting) OpName() string {
+	return "transfer_to_vesting"
+}
+
 type Auths struct {
 	WeightThreshold int              `json:"weight_threshold"`
 	AccountAuths    [][2]interface{} `json:"account_auths"` // tuple (string, int)

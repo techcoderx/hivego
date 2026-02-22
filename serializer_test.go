@@ -142,3 +142,11 @@ func TestSerializeOpClaimAccount(t *testing.T) {
 		t.Error("Expected", expected, "got", got)
 	}
 }
+
+func TestSerializeOpTransferToVesting(t *testing.T) {
+	got, _ := getTestPowerUp().SerializeOp()
+	expected := []byte{3, 9, 105, 110, 105, 116, 109, 105, 110, 101, 114, 10, 109, 97, 103, 105, 46, 116, 101, 115, 116, 49, 160, 134, 1, 0, 0, 0, 0, 0, 35, 32, 188, 190}
+	if !bytes.Equal(got, expected) {
+		t.Error("Expected", expected, "got", got)
+	}
+}
