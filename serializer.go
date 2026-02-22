@@ -347,6 +347,19 @@ func (o CancelTransferFromSavings) SerializeOp() ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
+func (o TransferToVesting) SerializeOp() ([]byte, error) {
+	var buf bytes.Buffer
+	buf.WriteByte(opIdB(o.OpName()))
+	appendVString(o.From, &buf)
+	appendVString(o.To, &buf)
+	err := appendVAsset(o.Amount, &buf)
+	if err != nil {
+		return nil, err
+	}
+
+	return buf.Bytes(), nil
+}
+
 func (o ClaimAccountOperation) SerializeOp() ([]byte, error) {
 	var buf bytes.Buffer
 	buf.WriteByte(opIdB(o.OpName()))

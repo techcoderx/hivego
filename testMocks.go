@@ -93,3 +93,11 @@ func getTestClaimAcc() HiveOperation {
 		Creator: "techcoderx",
 	}
 }
+
+func getTestPowerUp() HiveOperation {
+	return TransferToVesting{
+		From:   "initminer",
+		To:     "magi.test1",
+		Amount: "100.000 HIVE",
+	}
+}
